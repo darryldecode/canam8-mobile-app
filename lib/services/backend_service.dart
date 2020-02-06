@@ -5,12 +5,16 @@ import 'package:http/http.dart' as http;
 
 class BackendService {
 
-  Future<ProductModel> getProduct(int productId) async {
+  Future<ProductModel> getProduct(productId) async {
 
     ProductModel product = ProductModel();
 
+    String endPoint = Config.API_ENDPOINT + "/products/get-by-url?pid=" + productId.toString();
+
+    print("Accessing backend at: " + endPoint);
+
     http.Response response = await http.get(
-        Config.API_ENDPOINT + productId.toString(),
+        endPoint,
         headers: <String, String>{'Authorization': 'Bearer ' + Config.ACCESS_TOKEN}
     );
 

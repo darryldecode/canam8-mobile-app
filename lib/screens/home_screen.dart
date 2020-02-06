@@ -2,7 +2,7 @@ import 'package:canamat8/animations/route_transition_scale.dart';
 import 'package:canamat8/models/product_model.dart';
 import 'package:canamat8/screens/product_screen.dart';
 import 'package:canamat8/services/backend_service.dart';
-import 'package:canamat8/services/server_handler.dart';
+import 'package:canamat8/services/bluetooth_handler.dart';
 import 'package:canamat8/utils/helpers.dart';
 import 'package:flutter/material.dart';
 
@@ -21,21 +21,43 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
 
-    ServerHandler serverHandler = ServerHandler();
+    BluetoothHandler bluetoothHandler = BluetoothHandler();
+    bluetoothHandler.connectAndListen((String data){
+      String event = data.split("|")[0].split("_")[1];
+      String uniqueUrl = data.split("|")[1].split("_")[1];
+      print("Event: " + event);
+      print("Content: " + uniqueUrl);
 
-    serverHandler.startServerAndListen((int productId){
+      if(event == 'rfid') {
+        BackendService().getProduct(Uri.encodeFull(uniqueUrl)).then((ProductModel product) {
 
-      // get product details from backend server.
-      BackendService().getProduct(productId).then((ProductModel product) {
+          // turn on LED
+          Map<String,num> rgb = Helpers.hexToRGB(product.categories[0].color);
+          bluetoothHandler.switchLedOn(rgb['r'], rgb['g'], rgb['b']);
 
-        // turn on LED
-        Map<String,num> rgb = Helpers.hexToRGB(product.categories[0].color);
-        serverHandler.switchLedOn(rgb['r'], rgb['g'], rgb['b']);
-
-        // show product
-        Navigator.push(context,RouteTransitionScale(page: ProductScreen(product: product,)));
-      });
+          // show product
+          Navigator.push(context,RouteTransitionScale(page: ProductScreen(product: product,)));
+        });
+      } else if(event == 'rfid-detach') {
+        Navigator.pop(context);
+      }
     });
+
+//    ServerHandler serverHandler = ServerHandler();
+//
+//    serverHandler.startServerAndListen((int productId){
+//
+//      // get product details from backend server.
+//      BackendService().getProduct(productId).then((ProductModel product) {
+//
+//        // turn on LED
+//        Map<String,num> rgb = Helpers.hexToRGB(product.categories[0].color);
+//        serverHandler.switchLedOn(rgb['r'], rgb['g'], rgb['b']);
+//
+//        // show product
+//        Navigator.push(context,RouteTransitionScale(page: ProductScreen(product: product,)));
+//      });
+//    });
   }
 
   @override
